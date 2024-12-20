@@ -1,50 +1,45 @@
 document.addEventListener("DOMContentLoaded", function () {
   // 1st task
-  const books = [
-    {
-      title: "Справочник по Raspberry Pi",
-      price: "$14.99",
-      image: "https://itbook.store/img/books/9781098130923.png",
-      url: "https://itbook.store/books/9781098130923"
-    },
-    {
-      title: "Python для анализа данных, 3-е издание",
-      price: "$34.96",
-      image: "https://itbook.store/img/books/9781098104030.png",
-      url: "https://itbook.store/books/9781098104030"
-    },
-    {
-      title: "Проектирование программ на C++",
-      price: "$48.99",
-      image: "https://itbook.store/img/books/9781098113162.png",
-      url: "https://itbook.store/books/9781098113162"
-    },
-    {
-      title: "Руководство по Flutter и Dart",
-      price: "$42.99",
-      image: "https://itbook.store/img/books/9781098119515.png",
-      url: "https://itbook.store/books/9781098119515"
-    }
-  ];
+  // https://api.itbook.store/1.0/new
+
 
   const booksWrapper = document.querySelector(".books");
-  let html = "";
+  const loader = document.querySelector("#loader");
+  const errorBlock = document.querySelector("#error");
 
-  for (const book of books) {
-    html += `
-      <a href="${book.url}" target="_blank" class="books-item">
-        <div class="books-img">
-          <img src="${book.image}" alt="">
-        </div>
-        <div class="books-info">
-          <h6 class="books-title">${book.title}</h6>
-          <span class="books-price">${book.price}</span>
-        </div>
-      </a>
-    `;
+  function renderBooks(books) {
+    let html = "";
+    for (const book of books) {
+      html += `
+        <a href="${book.url}" target="_blank" class="books-item">
+          <div class="books-img">
+            <img src="${book.image}" alt="">
+          </div>
+          <div class="books-info">
+            <h6 class="books-title">${book.title}</h6>
+            <span class="books-price">${book.price}</span>
+          </div>
+        </a>
+      `;
+    }
+    booksWrapper.innerHTML = html;
   }
-  booksWrapper.innerHTML = html;
-  
+
+  async function fetchBooks() {
+    try {
+      const response = await fetch("https://api.itbook.store/1.0/new");
+      const data = await response.json();
+      renderBooks(data.books.slice(4, 8));
+    } catch (error) {
+      console.log(error);
+      errorBlock.textContent = "Произошла ошибка во время запроса на сервер!";
+    } finally {
+      loader.style.display = "none";
+    }
+  }
+
+  fetchBooks();
+
   // 2nd task
   const sliderWrapper = document.querySelector(".testimonials");
   const sliderContainer = document.querySelector(".testimonials-container");
@@ -54,6 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const sliderRightButton = sliderButtons[1];
   const offsetSize = sliderWrapper.offsetWidth;
   let sliderIndex = 0;
+  let intervalId;
 
   function moveSlide(index) {
     sliderContainer.style.marginLeft = `-${index * offsetSize}px`;
@@ -63,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sliderIndex !== 0) {
       sliderIndex--;
       moveSlide(sliderIndex); 
+      resetAutoSlide();
     }
   }
 
@@ -70,7 +67,25 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sliderIndex !== sliderItems.length - 1) {
       sliderIndex++;
       moveSlide(sliderIndex); 
+      resetAutoSlide();
     }
+  }
+
+  function startAutoSlide() {
+    intervalId = setInterval(function () {
+      if (sliderIndex < sliderItems.length - 1) {
+        sliderIndex++;
+      } else {
+        sliderIndex = 0;
+      }
+      moveSlide(sliderIndex);
+    }, 5000);
+  }
+  startAutoSlide();
+
+  function resetAutoSlide() {
+    clearInterval(intervalId);
+    startAutoSlide();
   }
 
   sliderLeftButton.addEventListener("click", previousSlide);
